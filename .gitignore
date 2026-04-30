@@ -7,13 +7,16 @@
 .phpunit.result.cache
 /.codex
 /.cursor/
+/.playwright-cli
 /.idea
 /.nova
 /.phpunit.cache
 /.vscode
 /.zed
+/app/graphify-out
 /auth.json
 /node_modules
+/output
 /public/build
 /public/hot
 /public/storage
