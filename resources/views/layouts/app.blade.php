@@ -7,6 +7,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
+    @php($canUseFocusControls = auth()->check() && (auth()->user()->isAdmin() || auth()->user()->isKitchen()))
     <div @class(['app-shell', 'guest-shell' => auth()->guest()])>
         @auth
             <button class="menu-toggle" type="button" data-menu-toggle aria-controls="app-sidebar" aria-expanded="false" aria-label="Open menu">
@@ -54,6 +55,17 @@
         @endauth
 
         <main class="main-panel">
+            @if($canUseFocusControls)
+                <div class="focus-controls no-print" data-focus-controls>
+                    <button class="icon-button focus-control-button" type="button" data-sidebar-toggle aria-label="Hide side panel" title="Hide side panel">
+                        <span data-sidebar-toggle-icon>&lsaquo;</span>
+                    </button>
+                    <button class="icon-button focus-control-button" type="button" data-fullscreen-toggle aria-label="Enter fullscreen" title="Enter fullscreen">
+                        <span data-fullscreen-toggle-icon>&#x26F6;</span>
+                    </button>
+                </div>
+            @endif
+
             @if(session('status'))
                 <div class="notice success">{{ session('status') }}</div>
             @endif

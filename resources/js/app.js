@@ -1,4 +1,23 @@
 document.addEventListener('click', (event) => {
+    const sidebarToggle = event.target.closest('[data-sidebar-toggle]');
+    if (sidebarToggle) {
+        const isHidden = document.body.classList.toggle('sidebar-hidden');
+        window.localStorage?.setItem('croissantly-sidebar-hidden', isHidden ? '1' : '0');
+        sidebarToggle.setAttribute('aria-label', isHidden ? 'Show side panel' : 'Hide side panel');
+        sidebarToggle.setAttribute('title', isHidden ? 'Show side panel' : 'Hide side panel');
+        return;
+    }
+
+    const fullscreenToggle = event.target.closest('[data-fullscreen-toggle]');
+    if (fullscreenToggle) {
+        if (document.fullscreenElement) {
+            document.exitFullscreen?.();
+        } else {
+            document.documentElement.requestFullscreen?.();
+        }
+        return;
+    }
+
     const menuToggle = event.target.closest('[data-menu-toggle]');
     if (menuToggle) {
         const isOpen = document.body.classList.toggle('menu-open');
@@ -51,11 +70,29 @@ document.addEventListener('keydown', (event) => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    const sidebarToggle = document.querySelector('[data-sidebar-toggle]');
+    if (sidebarToggle && window.localStorage?.getItem('croissantly-sidebar-hidden') === '1') {
+        document.body.classList.add('sidebar-hidden');
+        sidebarToggle.setAttribute('aria-label', 'Show side panel');
+        sidebarToggle.setAttribute('title', 'Show side panel');
+    }
+
     document.querySelectorAll('[data-auto-open-modal]').forEach((dialog) => {
         if (dialog instanceof HTMLDialogElement && typeof dialog.showModal === 'function' && !dialog.open) {
             dialog.showModal();
         }
     });
+});
+
+document.addEventListener('fullscreenchange', () => {
+    const isFullscreen = Boolean(document.fullscreenElement);
+    document.body.classList.toggle('is-fullscreen', isFullscreen);
+
+    const fullscreenToggle = document.querySelector('[data-fullscreen-toggle]');
+    if (fullscreenToggle) {
+        fullscreenToggle.setAttribute('aria-label', isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen');
+        fullscreenToggle.setAttribute('title', isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen');
+    }
 });
 
 document.addEventListener('submit', (event) => {
