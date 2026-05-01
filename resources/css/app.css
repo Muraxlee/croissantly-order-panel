@@ -292,6 +292,13 @@ small {
     align-items: end;
 }
 
+.archive-filter {
+    display: grid;
+    grid-template-columns: minmax(130px, 150px) minmax(130px, 150px) minmax(220px, 320px) auto auto;
+    gap: 8px;
+    align-items: end;
+}
+
 .split-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -814,6 +821,29 @@ td small {
     flex-wrap: wrap;
     gap: 4px;
     margin-top: 8px;
+}
+
+.archive-order-list {
+    display: grid;
+    gap: 18px;
+}
+
+.archive-day-group {
+    display: grid;
+    gap: 10px;
+}
+
+.archive-day-head {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 10px;
+}
+
+.archive-order-row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
 }
 
 .kitchen-ticket {
@@ -1925,7 +1955,8 @@ td small {
 
     .section-head,
     .section-actions,
-    .search-filter {
+    .search-filter,
+    .archive-filter {
         width: 100%;
     }
 
@@ -1937,7 +1968,8 @@ td small {
         justify-items: stretch;
     }
 
-    .search-filter {
+    .search-filter,
+    .archive-filter {
         grid-template-columns: 1fr;
     }
 

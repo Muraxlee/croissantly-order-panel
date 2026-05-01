@@ -47,6 +47,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/client/orders/{order}', [ClientController::class, 'updateOrder'])->name('client.orders.update');
 
     Route::get('/kitchen', [KitchenController::class, 'index'])->name('kitchen.dashboard');
+    Route::get('/kitchen/completed-orders', [KitchenController::class, 'completed'])->name('kitchen.orders.completed');
     Route::post('/kitchen/orders/start-all', [KitchenController::class, 'startAll'])->name('kitchen.orders.start-all');
     Route::post('/kitchen/orders/{order}/approve', [KitchenController::class, 'approve'])->name('kitchen.orders.approve');
     Route::post('/kitchen/orders/{order}/reject', [KitchenController::class, 'reject'])->name('kitchen.orders.reject');

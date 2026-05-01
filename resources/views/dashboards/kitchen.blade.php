@@ -2,7 +2,7 @@
 
 @section('content')
     @php
-        $productionOrders = $orders->whereIn('status', ['approved', 'cooking', 'packed']);
+        $productionOrders = $orders->whereIn('status', ['approved', 'cooking']);
         $productGroups = $productionOrders
             ->flatMap(fn ($order) => $order->items->map(fn ($item) => [
                 'item' => $item,
@@ -25,6 +25,7 @@
                 <button class="primary-button">Start Cooking</button>
             </form>
         @endif
+        <a class="secondary-button" href="{{ route('kitchen.orders.completed') }}">Completed orders</a>
     </header>
 
     <section class="kitchen-production">
@@ -60,7 +61,7 @@
                 </div>
             </article>
         @empty
-            <div class="panel empty">No approved orders waiting for kitchen.</div>
+            <div class="panel empty">No approved or cooking orders waiting for kitchen.</div>
         @endforelse
     </section>
 

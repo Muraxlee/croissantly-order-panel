@@ -34,6 +34,9 @@
                     @elseif(auth()->user()->isClient())
                         <a @class(['active' => request()->routeIs('client.place')]) href="{{ route('client.place') }}">Place order</a>
                         <a @class(['active' => request()->routeIs('client.orders.*')]) href="{{ route('client.orders.index') }}">Your orders</a>
+                    @elseif(auth()->user()->isKitchen())
+                        <a @class(['active' => request()->routeIs('kitchen.dashboard')]) href="{{ route('kitchen.dashboard') }}">Kitchen board</a>
+                        <a @class(['active' => request()->routeIs('kitchen.orders.completed')]) href="{{ route('kitchen.orders.completed') }}">Completed orders</a>
                     @else
                         <a @class(['active' => request()->routeIs('dashboard')]) href="{{ route('dashboard') }}">Dashboard</a>
                     @endif

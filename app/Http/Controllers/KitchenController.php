@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class KitchenController extends Controller
@@ -18,6 +19,53 @@ class KitchenController extends Controller
                 ->oldest('required_at')
                 ->latest()
                 ->get(),
+        ]);
+    }
+
+    public function completed(Request $request)
+    {
+        $this->authorizeKitchen();
+
+        $data = $request->validate([
+            'from' => ['nullable', 'date'],
+            'to' => ['nullable', 'date'],
+            'q' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $search = trim((string) ($data['q'] ?? ''));
+
+        $orders = Order::with(['client.clientProfile', 'items'])
+            ->where('status', 'completed')
+            ->when(! empty($data['from']), fn ($query) => $query->whereDate('updated_at', '>=', $data['from']))
+            ->when(! empty($data['to']), fn ($query) => $query->whereDate('updated_at', '<=', $data['to']))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('order_number', 'like', "%{$search}%")
+                        ->orWhere('customer_name', 'like', "%{$search}%")
+                        ->orWhere('customer_phone', 'like', "%{$search}%")
+                        ->orWhere('customer_address', 'like', "%{$search}%")
+                        ->orWhere('notes', 'like', "%{$search}%")
+                        ->orWhereHas('client', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('username', 'like', "%{$search}%")
+                                ->orWhereHas('clientProfile', function ($query) use ($search) {
+                                    $query->where('business_name', 'like', "%{$search}%")
+                                        ->orWhere('contact_name', 'like', "%{$search}%")
+                                        ->orWhere('phone', 'like', "%{$search}%");
+                                });
+                        })
+                        ->orWhereHas('items', fn ($query) => $query->where('product_name', 'like', "%{$search}%"));
+                });
+            })
+            ->latest('updated_at')
+            ->get();
+
+        return view('dashboards.kitchen-completed', [
+            'orders' => $orders,
+            'ordersByDate' => $orders->groupBy(fn ($order) => $order->updated_at->toDateString()),
+            'from' => $data['from'] ?? null,
+            'to' => $data['to'] ?? null,
+            'search' => $search,
         ]);
     }
 
@@ -111,8 +159,11 @@ class KitchenController extends Controller
     public function markPacked(Order $order)
     {
         $this->authorizeKitchen();
-        $order->update(['status' => 'packed']);
-        OrderStatusHistory::create(['order_id' => $order->id, 'user_id' => auth()->id(), 'status' => 'packed', 'note' => 'Kitchen packed the order.']);
+
+        if ($order->status === 'cooking') {
+            $order->update(['status' => 'packed']);
+            OrderStatusHistory::create(['order_id' => $order->id, 'user_id' => auth()->id(), 'status' => 'packed', 'note' => 'Kitchen packed the order.']);
+        }
 
         return back()->with('status', 'Order marked packed.');
     }
@@ -120,8 +171,11 @@ class KitchenController extends Controller
     public function complete(Order $order)
     {
         $this->authorizeKitchen();
-        $order->update(['status' => 'completed']);
-        OrderStatusHistory::create(['order_id' => $order->id, 'user_id' => auth()->id(), 'status' => 'completed', 'note' => 'Order completed.']);
+
+        if ($order->status === 'packed') {
+            $order->update(['status' => 'completed']);
+            OrderStatusHistory::create(['order_id' => $order->id, 'user_id' => auth()->id(), 'status' => 'completed', 'note' => 'Order completed.']);
+        }
 
         return back()->with('status', 'Order completed.');
     }
