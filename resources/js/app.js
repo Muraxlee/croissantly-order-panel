@@ -47,6 +47,13 @@ document.addEventListener('click', (event) => {
         document.querySelector('[data-menu-toggle]')?.setAttribute('aria-label', 'Open menu');
     }
 
+    const pageLink = event.target.closest('a[href]');
+    if (shouldLoadInPlace(pageLink)) {
+        event.preventDefault();
+        loadPage(pageLink.href);
+        return;
+    }
+
     const openButton = event.target.closest('[data-open-modal]');
     if (openButton) {
         const dialog = document.getElementById(openButton.dataset.openModal);
@@ -118,6 +125,14 @@ document.addEventListener('submit', (event) => {
         return;
     }
 
+    if (shouldSubmitInPlace(form)) {
+        event.preventDefault();
+        loadPage(new URLSearchParams(new FormData(form)).toString()
+            ? `${form.action}?${new URLSearchParams(new FormData(form)).toString()}`
+            : form.action);
+        return;
+    }
+
     const methodInput = form.querySelector('input[name="_method"]');
     const isDelete = methodInput && methodInput.value.toLowerCase() === 'delete';
 
@@ -131,3 +146,89 @@ document.addEventListener('click', (event) => {
         event.target.close();
     }
 });
+
+window.addEventListener('popstate', () => {
+    if (window.localStorage?.getItem('croissantly-fullscreen-mode') === '1') {
+        loadPage(window.location.href, { push: false });
+    }
+});
+
+function shouldLoadInPlace(link) {
+    if (!(link instanceof HTMLAnchorElement)) {
+        return false;
+    }
+
+    if (window.localStorage?.getItem('croissantly-fullscreen-mode') !== '1') {
+        return false;
+    }
+
+    if (link.target || link.hasAttribute('download') || link.href.includes('#')) {
+        return false;
+    }
+
+    const url = new URL(link.href);
+    return url.origin === window.location.origin;
+}
+
+function shouldSubmitInPlace(form) {
+    if (!(form instanceof HTMLFormElement)) {
+        return false;
+    }
+
+    if (window.localStorage?.getItem('croissantly-fullscreen-mode') !== '1') {
+        return false;
+    }
+
+    const method = (form.method || 'get').toLowerCase();
+    const url = new URL(form.action);
+
+    return method === 'get' && url.origin === window.location.origin;
+}
+
+async function loadPage(url, options = {}) {
+    const { push = true } = options;
+    const response = await fetch(url, {
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+        credentials: 'same-origin',
+    });
+
+    if (!response.ok) {
+        window.location.href = url;
+        return;
+    }
+
+    const html = await response.text();
+    const finalUrl = response.url || url;
+    const nextDocument = new DOMParser().parseFromString(html, 'text/html');
+    const nextMain = nextDocument.querySelector('.main-panel');
+    const currentMain = document.querySelector('.main-panel');
+
+    if (!nextMain || !currentMain) {
+        window.location.href = url;
+        return;
+    }
+
+    currentMain.innerHTML = nextMain.innerHTML;
+
+    const nextNav = nextDocument.querySelector('.nav-list');
+    const currentNav = document.querySelector('.nav-list');
+    if (nextNav && currentNav) {
+        currentNav.innerHTML = nextNav.innerHTML;
+    }
+
+    const nextTitle = nextDocument.querySelector('title');
+    if (nextTitle) {
+        document.title = nextTitle.textContent;
+    }
+
+    document.body.classList.add('is-fullscreen');
+    updateFullscreenToggle();
+
+    if (push && finalUrl !== window.location.href) {
+        window.history.pushState({}, '', finalUrl);
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+}
